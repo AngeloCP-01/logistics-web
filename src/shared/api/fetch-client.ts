@@ -44,6 +44,7 @@ export function createFetchClient(opts: FetchClientOptions): FetchClient {
     }
 
     if (!res.ok) throw await parseProblem(res);
+    // 204 has no body; callers of no-content endpoints type T as void/undefined.
     if (res.status === 204) return undefined as T;
     return (await res.json()) as T;
   };

@@ -13,6 +13,7 @@
     "exactOptionalPropertyTypes": true,
     "noUncheckedIndexedAccess": true,
     "verbatimModuleSyntax": true,
+    "noEmit": true,
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": { "@/*": ["./src/*"] },

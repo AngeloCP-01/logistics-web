@@ -1,7 +1,8 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_API_BASE_URL: string;
+  // Optional: unset in dev yields undefined at runtime, so callers default to "/api".
+  readonly VITE_API_BASE_URL?: string;
   readonly VITE_WS_URL: string;
   readonly VITE_MAP_STYLE_URL: string;
 }

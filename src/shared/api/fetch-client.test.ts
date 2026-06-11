@@ -60,6 +60,36 @@ describe("fetchClient", () => {
     expect(refreshCalls).toBe(1);
   });
 
+  it("returns undefined on a 204 No Content", async () => {
+    useAuthStore.getState().setSession("tok", { id: "u1", email: "a@b.com", role: "customer" });
+    const fetchImpl = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+    const client = createFetchClient({ baseUrl: "/api", fetchImpl, refresh: vi.fn() });
+
+    const data = await client<void>("/orders/x/cancel", { method: "POST" });
+
+    expect(data).toBeUndefined();
+  });
+
+  it("sets content-type application/json when a body is present and none is set", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(200, { ok: true }));
+    const client = createFetchClient({ baseUrl: "/api", fetchImpl, refresh: vi.fn() });
+
+    await client("/orders", { method: "POST", body: JSON.stringify({ a: 1 }) });
+
+    const headers = (fetchImpl.mock.calls[0]![1] as RequestInit).headers as Headers;
+    expect(headers.get("content-type")).toBe("application/json");
+  });
+
+  it("does not override an explicit content-type", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(200, { ok: true }));
+    const client = createFetchClient({ baseUrl: "/api", fetchImpl, refresh: vi.fn() });
+
+    await client("/upload", { method: "POST", body: "x", headers: { "content-type": "text/plain" } });
+
+    const headers = (fetchImpl.mock.calls[0]![1] as RequestInit).headers as Headers;
+    expect(headers.get("content-type")).toBe("text/plain");
+  });
+
   it("throws ApiError when refresh fails", async () => {
     useAuthStore.getState().setSession("stale", { id: "u1", email: "a@b.com", role: "customer" });
     const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(401, { title: "expired" }));
