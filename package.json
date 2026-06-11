@@ -12,7 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "gen:api": "openapi-typescript ../logistics-contracts/openapi/auth-service.yaml -o ./src/shared/api/types/auth.d.ts"
+    "gen:api": "openapi-typescript ../logistics-contracts/openapi/auth-service.yaml -o ./src/shared/api/types/auth.d.ts && openapi-typescript ../logistics-contracts/openapi/order-service.yaml -o ./src/shared/api/types/order.d.ts && openapi-typescript ../logistics-contracts/openapi/user-service.yaml -o ./src/shared/api/types/user.d.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
