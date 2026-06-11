@@ -42,6 +42,19 @@ describe("POST /api/auth/login", () => {
     expect(res.headers["Set-Cookie"]).toBeUndefined();
   });
 
+  it("returns 502 without a cookie when the profile fetch fails", async () => {
+    vi.stubGlobal("fetch", vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ accessToken: "acc", refreshToken: "ref", expiresIn: 900, tokenType: "Bearer" }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ title: "boom" }), { status: 500 })));
+    const req = { method: "POST", body: { email: "a@b.com", password: "pw" } } as never;
+    const res = mockRes();
+
+    await handler(req, res as never);
+
+    expect(res.statusCode).toBe(502);
+    expect(res.headers["Set-Cookie"]).toBeUndefined();
+  });
+
   it("rejects non-POST", async () => {
     const req = { method: "GET" } as never;
     const res = mockRes();

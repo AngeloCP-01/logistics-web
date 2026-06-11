@@ -44,4 +44,17 @@ describe("POST /api/auth/refresh", () => {
     expect(res.statusCode).toBe(401);
     expect(String(res.headers["Set-Cookie"])).toContain("Max-Age=0");
   });
+
+  it("502s and clears the cookie when the profile fetch fails after a valid refresh", async () => {
+    vi.stubGlobal("fetch", vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ accessToken: "acc2", refreshToken: "ref2", expiresIn: 900, tokenType: "Bearer" }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ title: "boom" }), { status: 500 })));
+    const req = { method: "POST", headers: { cookie: "rt=ref1" } } as never;
+    const res = mockRes();
+
+    await handler(req, res as never);
+
+    expect(res.statusCode).toBe(502);
+    expect(String(res.headers["Set-Cookie"])).toContain("Max-Age=0");
+  });
 });
