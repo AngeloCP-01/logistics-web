@@ -10,7 +10,10 @@ export interface FetchClientOptions {
 export type FetchClient = <T>(path: string, init?: RequestInit) => Promise<T>;
 
 export function createFetchClient(opts: FetchClientOptions): FetchClient {
-  const doFetch = opts.fetchImpl ?? fetch;
+  // Resolve the global `fetch` at call time, not module-eval time: test runners
+  // (vitest jsdom) and MSW replace `globalThis.fetch` after this module is
+  // evaluated, so a captured reference would be stale and bypass interception.
+  const doFetch: typeof fetch = opts.fetchImpl ?? ((input, init) => globalThis.fetch(input, init));
   let inFlightRefresh: Promise<void> | null = null;
 
   function refreshOnce(): Promise<void> {
