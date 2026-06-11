@@ -43,4 +43,22 @@ describe("session", () => {
     await logoutRequest();
     expect(useAuthStore.getState().isAuthenticated()).toBe(false);
   });
+
+  it("logoutRequest still clears the store when the network call fails", async () => {
+    useAuthStore.getState().setSession("acc", { id: "u1", email: "a@b.com", role: "admin" });
+    server.use(http.post("/api/auth/logout", () => HttpResponse.error()));
+    // The transport rejects on a network error; the `finally` must still clear the store.
+    await logoutRequest().catch(() => undefined);
+    expect(useAuthStore.getState().isAuthenticated()).toBe(false);
+  });
+
+  it("loginRequest rejects with an ApiError carrying the problem status on a bad login", async () => {
+    server.use(http.post("/api/auth/login", () =>
+      HttpResponse.json({ title: "Invalid credentials", status: 401 }, { status: 401 })));
+    await expect(loginRequest({ email: "a@b.com", password: "bad" })).rejects.toMatchObject({
+      name: "ApiError",
+      status: 401,
+    });
+    expect(useAuthStore.getState().isAuthenticated()).toBe(false);
+  });
 });
