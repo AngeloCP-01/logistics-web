@@ -9,7 +9,7 @@ import { ApiError } from "@/shared/api/api-error";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/shared/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/shared/ui/dialog";
 
 export function AddressPicker({ value, onChange, error }: { value: string; onChange: (id: string) => void; error?: string }) {
   const { data: addresses, isLoading } = useAddresses();
@@ -44,6 +44,7 @@ export function AddressPicker({ value, onChange, error }: { value: string; onCha
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Add a saved address</DialogTitle>
+              <DialogDescription>Save a dropoff address to use when placing orders.</DialogDescription>
             </DialogHeader>
             <AddAddressForm
               onCreated={(id) => {
