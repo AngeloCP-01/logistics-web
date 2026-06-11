@@ -3,6 +3,8 @@ interface AddressLike {
   street: string;
   city: string;
   country: string;
+  lat?: number;
+  lng?: number;
 }
 
 export function formatAddress(a: AddressLike): string {
