@@ -10,3 +10,4 @@ test-results/
 .superpowers/
 # generated API types snapshot is checked in (see Task B1); raw build cache is not
 .vite/
+*.tsbuildinfo
