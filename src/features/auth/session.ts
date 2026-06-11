@@ -1,4 +1,5 @@
 import { useAuthStore, type AuthUser } from "./auth-store";
+import { parseProblem } from "@/shared/api/api-error";
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? "/api";
 
@@ -41,7 +42,6 @@ export async function bootstrapSession(): Promise<boolean> {
 export async function loginRequest(input: { email: string; password: string }): Promise<void> {
   const res = await postAuth("/auth/login", input);
   if (!res.ok) {
-    const { parseProblem } = await import("@/shared/api/api-error");
     throw await parseProblem(res);
   }
   apply((await res.json()) as SessionResponse);
@@ -58,7 +58,6 @@ export async function logoutRequest(): Promise<void> {
 export async function registerRequest(input: { email: string; password: string; role: "customer" | "driver" }): Promise<void> {
   const res = await postAuth("/auth/register", input);
   if (!res.ok) {
-    const { parseProblem } = await import("@/shared/api/api-error");
     throw await parseProblem(res);
   }
   await loginRequest({ email: input.email, password: input.password });
