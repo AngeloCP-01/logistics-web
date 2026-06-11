@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.vercel/
+*.local
+.env
+.env.*.local
+coverage/
+playwright-report/
+test-results/
+.superpowers/
+# generated API types snapshot is checked in (see Task B1); raw build cache is not
+.vite/
