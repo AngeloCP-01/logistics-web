@@ -7,8 +7,6 @@ const NAV: Record<string, { to: string; label: string }[]> = {
   customer: [
     { to: "/", label: "Home" },
     { to: "/orders", label: "Orders" },
-    { to: "/notifications", label: "Notifications" },
-    { to: "/profile", label: "Profile" },
   ],
   driver: [{ to: "/driver", label: "Today" }, { to: "/driver/offers", label: "Offers" }],
   admin: [
