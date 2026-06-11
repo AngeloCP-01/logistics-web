@@ -54,3 +54,12 @@ export async function logoutRequest(): Promise<void> {
     useAuthStore.getState().clear();
   }
 }
+
+export async function registerRequest(input: { email: string; password: string; role: "customer" | "driver" }): Promise<void> {
+  const res = await postAuth("/auth/register", input);
+  if (!res.ok) {
+    const { parseProblem } = await import("@/shared/api/api-error");
+    throw await parseProblem(res);
+  }
+  await loginRequest({ email: input.email, password: input.password });
+}
