@@ -56,14 +56,19 @@ vercel.json
 - All API calls go through the typed gateway client. No bespoke `fetch` calls in components.
 - Generate TS types from `logistics-contracts/openapi/*.yaml` at build time (or pin to a snapshot in the contracts npm package).
 
-## Open items (decide in the Web spec)
+## Locked decisions (from the Web spec — 2026-06-11)
 
-- Design system: build minimal in-house (Tailwind primitives) vs. adopt shadcn/ui vs. headless lib
-- Map library: MapLibre + OSM tiles (free) vs. Mapbox (paid free tier)
-- Route library: React Router v6 vs. TanStack Router
-- Form library: react-hook-form + Zod (likely)
-- Storybook: yes/no for V1
-- E2E testing: Playwright? cypress? skip for V1?
+- **Scope:** full three-role app (customer · driver · admin).
+- **Design system:** shadcn/ui (Radix + Tailwind), direction A (light slate + indigo); polished via the `ui-ux-pro-max` skill.
+- **Routing:** React Router v7, route-level role guards.
+- **State:** React Query (server) + Zustand (auth + UI).
+- **Forms:** react-hook-form + Zod.
+- **Maps:** MapLibre GL JS + OpenFreeMap (dark canvas on tracking/dispatch).
+- **Realtime:** Socket.IO client; the driver app is the real location producer.
+- **Auth/session:** scoped BFF — 3 Vercel functions hold the refresh token in an httpOnly cookie; access token in memory; reload survives via silent refresh.
+- **API types:** `openapi-typescript` from `@angelocp-01/logistics-contracts`.
+- **Tests:** Vitest + RTL + MSW; one Playwright full-loop E2E. No Storybook for V1.
+- **Config deviation:** ESLint/Prettier are web-flavored (React-aware) rather than the Node-service vendored copies; the tsconfig is a Vite/React config, not the Node base.
 
 ## Don't do
 
