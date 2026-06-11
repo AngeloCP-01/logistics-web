@@ -13,7 +13,7 @@ npm run dev
 ## Test
 ```bash
 npm test            # vitest unit/component
-npm run test:e2e    # playwright (needs a running stack)
+npm run test:e2e    # playwright (stubbed smokes — no backend; the full-loop E2E is manual)
 npm run lint && npm run typecheck
 ```
 

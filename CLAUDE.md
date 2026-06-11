@@ -1,84 +1,97 @@
 # logistics-web — Repo Guide
 
-> Customer + driver + admin SPA. React + Vite + Tailwind. Deployed to Vercel.
+> Customer + driver + admin SPA for the AI Logistics platform. React 18 + Vite + TypeScript + Tailwind + shadcn/ui. Deployed to Vercel.
 
 **Phase:** 7 (Web Frontend)
-**Status:** ⬜ Not started — scaffold only. Brainstorm a Web spec before implementation.
+**Status:** 🟡 In progress — **`v0.2.0` shipped** (Plan 1 foundation + Plan 2 customer orders). Built in sequenced installments; the customer role is split into Orders core (done) → Profile + Notifications (next) → Live Tracking. Driver + Admin apps come after.
 
 ## What this app does
 
-One single-page app. Three role-gated views:
-- **Customer**: register / login, place an order, track in real time, view history, manage profile.
-- **Driver**: log in, toggle availability, accept/reject incoming dispatches, see live order details, mark delivery completed.
+One single-page app, three role-gated views (route-level guards on the JWT role claim — the client gate is UX only; real authz is server-side):
+- **Customer**: register / login, place an order, view + filter order history, view order detail + cancel, manage profile + addresses, track in real time, notifications.
+- **Driver**: log in, toggle availability, accept/reject dispatches, live active-delivery (the real location producer), mark delivered.
 - **Admin**: order monitoring, driver management, delivery analytics, manual dispatch override.
 
-Routing gates each view by JWT role claim.
+## What's shipped so far
 
-## Locked decisions
-
-- **Tech**: React 18, Vite, TypeScript, Tailwind CSS.
-- **Deployment**: Vercel. `vercel.json` rewrites `/api/*` → `https://api.<domain>/v1/*` to keep first-party-cookie semantics.
-- **State**: lightweight — React Query for server state, Zustand or React context for auth + UI state. Avoid Redux.
-- **Realtime**: Socket.IO client connecting directly to `wss://api.<domain>/v1/tracking/socket.io/` (proxied through gateway).
-- **Auth**: JWT in `Authorization: Bearer` header. Tokens stored in memory + refresh token in httpOnly cookie (web only).
-- **Maps**: TBD per Web spec. Likely MapLibre + free tile provider; possibly Mapbox if budget allows.
-
-## Layout (target)
-
-```
-src/
-  app/
-    routes/                   # role-gated route trees
-    customer/
-    driver/
-    admin/
-  features/                   # feature-sliced
-    auth/
-    orders/
-    tracking/
-    notifications/
-  shared/
-    api/                      # gateway client (OpenAPI-typed if feasible)
-    ui/                       # design system components
-    hooks/
-  main.tsx
-tests/
-public/
-vite.config.ts
-tailwind.config.ts
-vercel.json
-```
-
-## Conventions
-
-- Same as platform: Conventional Commits, trunk-based, SemVer tags.
-- ESLint + Prettier configs imported from `../logistics-infrastructure/shared/`.
-- All API calls go through the typed gateway client. No bespoke `fetch` calls in components.
-- Generate TS types from `logistics-contracts/openapi/*.yaml` at build time (or pin to a snapshot in the contracts npm package).
+- **Plan 1 — Foundation (`v0.1.0`)**: Vite/TS/Tailwind/shadcn scaffold; the **auth BFF** (3 Vercel functions `api/auth/{login,refresh,logout}` — httpOnly refresh cookie, access token in memory); the typed `fetchClient` (auth injection + **single-flight 401 refresh**) + `ApiError` (RFC 7807); Zustand auth store; React Router v7 with `<RequireRole>`; login/register screens; CI (lint + typecheck + Vitest + build) + one Playwright role-gate smoke.
+- **Plan 2 — Customer Orders core (`v0.2.0`)**: the customer order-management slice — Home (active-delivery banner + recent orders + CTA), Place Order (inline pickup + saved-address dropoff with inline add-address + free-text items + advisory schedule), My Orders (cursor pagination + status filter), Order Detail (status timeline + items + addresses + conditional cancel). React Query hooks over the typed client; multi-service `gen:api` (auth + order + user types). Plus a Playwright customer happy-path E2E.
 
 ## Locked decisions (from the Web spec — 2026-06-11)
 
-- **Scope:** full three-role app (customer · driver · admin).
-- **Design system:** shadcn/ui (Radix + Tailwind), direction A (light slate + indigo); polished via the `ui-ux-pro-max` skill.
-- **Routing:** React Router v7, route-level role guards.
-- **State:** React Query (server) + Zustand (auth + UI).
-- **Forms:** react-hook-form + Zod.
-- **Maps:** MapLibre GL JS + OpenFreeMap (dark canvas on tracking/dispatch).
-- **Realtime:** Socket.IO client; the driver app is the real location producer.
-- **Auth/session:** scoped BFF — 3 Vercel functions hold the refresh token in an httpOnly cookie; access token in memory; reload survives via silent refresh.
-- **API types:** `openapi-typescript` generating a **checked-in snapshot** (`src/shared/api/types/`). `gen:api` reads the OpenAPI from the **local sibling checkout** (`../logistics-contracts/openapi/*.yaml`), not the npm package — the published `@angelocp-01/logistics-contracts@0.7.0` ships only `dist/` + `schemas/` (no `openapi/`) and is `access:restricted`, so it can't feed generation and isn't a dependency here. CI/build use the committed snapshot and need no registry access. **Future contracts-repo cleanup:** add `openapi/` to the package `files[]` (and reconsider public access) so consumers can `gen:api` from `node_modules` without a sibling checkout.
-- **Tests:** Vitest + RTL + MSW; one Playwright full-loop E2E. No Storybook for V1.
-- **Config deviation:** ESLint/Prettier are web-flavored (React-aware) rather than the Node-service vendored copies; the tsconfig is a Vite/React config, not the Node base.
+- **Scope:** full three-role app (customer · driver · admin), built in sequenced shippable installments.
+- **Design system:** shadcn/ui (Radix + Tailwind), direction A (light slate + indigo); concrete visual polish is owned by the `ui-ux-pro-max` skill (screens land as functional, behavior-tested baselines first).
+- **Routing:** React Router v7, route-level role guards (`<RequireRole>`).
+- **State:** React Query (server state) + Zustand (auth + UI).
+- **Forms:** react-hook-form + Zod. Pattern: **string-typed form values + an explicit `toXxxRequest` converter** to the numeric API shape (sidesteps `z.coerce`/RHF input-output generic friction; converters are unit-tested). Native `<select>` (not radix Select) for simple pickers/filters — reliably testable under jsdom.
+- **Maps:** MapLibre GL JS + OpenFreeMap (dark canvas on tracking/dispatch) — arrives with the Live Tracking plan.
+- **Realtime:** Socket.IO client; the driver app is the real location producer. **Tracking WS handshake passes the access token in the Socket.IO `auth` payload** (`io(url, { auth: { token } })`); client emits `room:join {orderId}`, server emits `driver:location {orderId,lat,lng,ts}`.
+- **Auth/session:** scoped BFF — 3 Vercel functions hold the refresh token in an httpOnly cookie; access token in Zustand memory; hard reload survives via silent refresh; single-flight refresh on 401.
+- **API types:** `openapi-typescript` generating a **checked-in snapshot** (`src/shared/api/types/`). `gen:api` reads the OpenAPI from the **local sibling checkout** (`../logistics-contracts/openapi/*.yaml`), not the npm package — the published `@angelocp-01/logistics-contracts@0.7.0` ships only `dist/` + `schemas/` (no `openapi/`) and is `access:restricted`, so it can't feed generation and isn't a dependency here. CI/build use the committed snapshot and need no registry access. **Future contracts-repo cleanup:** add `openapi/` to the package `files[]` (and reconsider public access) so consumers can `gen:api` from `node_modules` without a sibling checkout. (Also: order-service `weightKg` is `number|null` at runtime but optional-not-nullable in the OpenAPI/generated type — frontend tolerates both; fix on the next contracts bump.)
+- **Tests:** Vitest + RTL + MSW (unit/component) + Playwright (E2E smokes in CI; the cross-service full-loop is a local/manual showcase). No Storybook for V1.
+- **Config deviation:** ESLint/Prettier are **web-flavored (React-aware) flat configs vendored in this repo**, NOT the Node-service copies from `logistics-infrastructure/shared/`. The tsconfig is a Vite/React project-references config (`tsconfig.{app,node}.json` with `noEmit`), not the Node base.
+
+## Structure (actual)
+
+```
+api/auth/{login,refresh,logout}.ts   # Vercel serverless — the auth BFF (+ _shared.ts)
+src/
+  app/
+    App.tsx · main.tsx               # root + session bootstrap gate
+    routes/                          # router.tsx, require-role.tsx, role-home.ts
+    shell/app-shell.tsx              # role-aware nav + logout
+    driver/ · admin/                 # placeholder homes (filled by later plans)
+    not-found.tsx · forbidden.tsx · error-element.tsx
+  features/
+    auth/                            # auth-store, session, login/register pages, schemas
+    orders/                          # types, hooks (use-my-orders/use-order/use-active-order/use-place-order/use-cancel-order),
+                                     #   order-status badge, order-schema, place-order/my-orders/order-detail pages, order-card, cancel dialog
+    addresses/                       # types, use-addresses/use-create-address, address-picker, address-schema
+    home/                            # customer-home
+  shared/
+    api/                            # client (api singleton), fetch-client, api-error, query-client, query-keys, types/ (generated)
+    ui/                             # shadcn atoms (button,input,label,card,badge,skeleton,dialog,table,textarea,separator)
+    lib/                            # utils (cn), format
+  test/                            # setup, msw-server, query-wrapper
+tests/e2e/                         # Playwright (role-gate, customer-orders)
+vite.config.ts · vitest.config.ts · tailwind.config.ts · vercel.json · components.json
+```
+
+> Feature-sliced: code that changes together lives together (a feature owns its types, hooks, schema, and screens). New features get a `src/features/<name>/` dir.
+
+## Conventions
+
+- Conventional Commits, trunk-based (`main` always deployable), per-repo SemVer tags (`v0.1.0`, `v0.2.0`, …).
+- **All API calls go through React Query hooks built on the typed `api` client** (`src/shared/api/client.ts`). **No bespoke `fetch` in components or hooks.**
+- Strict TS (`exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`, `verbatimModuleSyntax` → `import type` for type-only imports). No `any` (use `unknown` + narrow).
+- Centralized query keys (`src/shared/api/query-keys.ts`); mutations invalidate the relevant keys.
+- Every data-bound view defines loading (Skeleton) / empty / error states. RFC 7807 → `ApiError`; field errors via RHF, form-level via `ApiError.title`.
+- Dialogs include a `<DialogDescription>` (radix a11y).
+
+## Develop
+
+```bash
+npm install
+cp .env.example .env        # GATEWAY_URL + VITE_* point at a running gateway
+npm run gen:api             # regenerate the typed API snapshot from ../logistics-contracts/openapi
+npm run dev                 # plain Vite — note: the auth BFF functions need `vercel dev` (or a dev shim) to run locally
+npm test                    # vitest
+npm run test:e2e            # playwright (stubbed; no backend needed for the current smokes)
+npm run lint && npm run typecheck && npm run build
+```
+
+> Local end-to-end auth needs the three `api/auth/*` serverless functions running — `npm run dev` (plain Vite) does not execute them; use `vercel dev`.
 
 ## Don't do
 
-- Don't call internal services directly. Everything goes through the gateway (`/api/*`).
-- Don't bake the gateway URL into the build. Read it from `import.meta.env.VITE_API_BASE_URL`.
-- Don't store the refresh token in `localStorage`. httpOnly cookie or in-memory only.
-- Don't render the admin nav for non-admin users — gate at the route level, not just on visibility.
+- Don't call internal services directly. Everything goes through the gateway via the same-origin `/api/*` surface.
+- Don't bake the gateway URL into the build. Read it from `import.meta.env.VITE_API_BASE_URL` (SPA) / `GATEWAY_URL` (BFF functions).
+- Don't store the refresh token in `localStorage`. httpOnly cookie (BFF) or in-memory access token only.
+- Don't render role nav/areas for the wrong role — gate at the route level (`<RequireRole>`), not just on visibility.
+- Don't add bespoke `fetch` calls; add a React Query hook on the `api` client.
 
 ## Pointers
 
-- Spec: [`../docs/superpowers/specs/2026-05-18-platform-decomposition-design.md`](../docs/superpowers/specs/2026-05-18-platform-decomposition-design.md) §6 Phase 7
-- Plan: TBD (brainstorm + plan in Phase 7)
+- Spec: [`../docs/superpowers/specs/2026-06-11-web-frontend-design.md`](../docs/superpowers/specs/2026-06-11-web-frontend-design.md)
+- Plans: [`../docs/superpowers/plans/2026-06-11-phase-7-web-foundation.md`](../docs/superpowers/plans/2026-06-11-phase-7-web-foundation.md) (Plan 1) · [`../docs/superpowers/plans/2026-06-11-phase-7-customer-orders.md`](../docs/superpowers/plans/2026-06-11-phase-7-customer-orders.md) (Plan 2)
 - Tracker: [`../docs/superpowers/tracker.md`](../docs/superpowers/tracker.md)
