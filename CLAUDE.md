@@ -66,7 +66,7 @@ vercel.json
 - **Maps:** MapLibre GL JS + OpenFreeMap (dark canvas on tracking/dispatch).
 - **Realtime:** Socket.IO client; the driver app is the real location producer.
 - **Auth/session:** scoped BFF — 3 Vercel functions hold the refresh token in an httpOnly cookie; access token in memory; reload survives via silent refresh.
-- **API types:** `openapi-typescript` from `@angelocp-01/logistics-contracts`.
+- **API types:** `openapi-typescript` generating a **checked-in snapshot** (`src/shared/api/types/`). `gen:api` reads the OpenAPI from the **local sibling checkout** (`../logistics-contracts/openapi/*.yaml`), not the npm package — the published `@angelocp-01/logistics-contracts@0.7.0` ships only `dist/` + `schemas/` (no `openapi/`) and is `access:restricted`, so it can't feed generation and isn't a dependency here. CI/build use the committed snapshot and need no registry access. **Future contracts-repo cleanup:** add `openapi/` to the package `files[]` (and reconsider public access) so consumers can `gen:api` from `node_modules` without a sibling checkout.
 - **Tests:** Vitest + RTL + MSW; one Playwright full-loop E2E. No Storybook for V1.
 - **Config deviation:** ESLint/Prettier are web-flavored (React-aware) rather than the Node-service vendored copies; the tsconfig is a Vite/React config, not the Node base.
 
