@@ -15,7 +15,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ["api/**/*.ts", "vite.config.ts", "vitest.config.ts", "playwright.config.ts"],
+    files: ["api/**/*.ts", "vite.config.ts", "vite-plugin-dev-bff.ts", "vitest.config.ts", "playwright.config.ts"],
     languageOptions: { globals: { ...globals.node } },
   },
 );
