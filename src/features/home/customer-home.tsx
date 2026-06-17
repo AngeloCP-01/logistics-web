@@ -23,15 +23,21 @@ export function CustomerHome() {
       {active.isLoading ? (
         <Skeleton className="h-24 w-full" />
       ) : active.data ? (
-        <Link to={`/orders/${active.data.id}`} className="block">
-          <Card className="space-y-2 border-indigo-200 p-4">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium">Active delivery</p>
-              <OrderStatusBadge status={active.data.status} />
-            </div>
-            <p className="text-sm text-muted-foreground">To {formatAddress(active.data.dropoff)}</p>
-          </Card>
-        </Link>
+        <Card className="space-y-2 border-indigo-200 p-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium">Active delivery</p>
+            <OrderStatusBadge status={active.data.status} />
+          </div>
+          <p className="text-sm text-muted-foreground">To {formatAddress(active.data.dropoff)}</p>
+          <div className="flex gap-3 pt-1">
+            <Link to={`/track/${active.data.id}`}>
+              <Button size="sm">Track</Button>
+            </Link>
+            <Link to={`/orders/${active.data.id}`} className="text-sm text-primary underline self-center">
+              View order
+            </Link>
+          </div>
+        </Card>
       ) : null}
 
       <section className="space-y-3">

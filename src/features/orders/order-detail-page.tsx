@@ -1,16 +1,18 @@
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useOrder } from "./use-order";
 import { OrderStatusBadge, statusLabel } from "./order-status";
 import { CancelOrderDialog } from "./cancel-order-dialog";
 import type { Order, OrderStatus } from "./types";
 import { formatAddress, formatDateTime } from "@/shared/lib/format";
 import { ApiError } from "@/shared/api/api-error";
+import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Separator } from "@/shared/ui/separator";
 
 const STEPS: OrderStatus[] = ["created", "assigned", "in_transit", "completed"];
 const CANCELLABLE: OrderStatus[] = ["created", "assigned"];
+const TRACKABLE: OrderStatus[] = ["assigned", "in_transit"];
 
 function Timeline({ order }: { order: Order }) {
   if (order.status === "cancelled") {
@@ -78,7 +80,14 @@ export function OrderDetailPage() {
         </ul>
       </Card>
 
-      {CANCELLABLE.includes(order.status) && <CancelOrderDialog orderId={order.id} />}
+      <div className="flex flex-wrap gap-3">
+        {TRACKABLE.includes(order.status) && (
+          <Link to={`/track/${order.id}`}>
+            <Button>Track delivery</Button>
+          </Link>
+        )}
+        {CANCELLABLE.includes(order.status) && <CancelOrderDialog orderId={order.id} />}
+      </div>
     </div>
   );
 }

@@ -16,7 +16,10 @@ beforeEach(() => useAuthStore.getState().setSession("t", { id: "u1", email: "c@x
 function renderAt(id: string) {
   return render(
     <MemoryRouter initialEntries={[`/orders/${id}`]}>
-      <Routes><Route path="/orders/:id" element={<OrderDetailPage />} /></Routes>
+      <Routes>
+        <Route path="/orders/:id" element={<OrderDetailPage />} />
+        <Route path="/track/:orderId" element={<div>track stub</div>} />
+      </Routes>
     </MemoryRouter>,
     { wrapper: QueryWrapper },
   );
@@ -49,5 +52,20 @@ describe("OrderDetailPage", () => {
     server.use(http.get("/api/orders/missing", () => HttpResponse.json({ title: "Order not found", status: 404 }, { status: 404 })));
     renderAt("missing");
     expect(await screen.findByText(/not found/i)).toBeInTheDocument();
+  });
+
+  it("offers a Track link for an in_transit order", async () => {
+    server.use(http.get("/api/orders/o1", () => HttpResponse.json(order("in_transit"))));
+    renderAt("o1");
+    await screen.findByText(/Crate of mangoes/);
+    const track = screen.getByRole("link", { name: /track delivery/i });
+    expect(track).toHaveAttribute("href", "/track/o1");
+  });
+
+  it("does not offer a Track link for a created order", async () => {
+    server.use(http.get("/api/orders/o1", () => HttpResponse.json(order("created"))));
+    renderAt("o1");
+    await screen.findByText(/Crate of mangoes/);
+    expect(screen.queryByRole("link", { name: /track delivery/i })).not.toBeInTheDocument();
   });
 });

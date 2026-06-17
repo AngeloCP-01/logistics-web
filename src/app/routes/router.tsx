@@ -10,6 +10,7 @@ import { CustomerHome } from "@/features/home/customer-home";
 import { PlaceOrderPage } from "@/features/orders/place-order-page";
 import { MyOrdersPage } from "@/features/orders/my-orders-page";
 import { OrderDetailPage } from "@/features/orders/order-detail-page";
+import { TrackPage } from "@/features/tracking/track-page";
 import { DriverHome } from "@/app/driver/driver-home";
 import { AdminHome } from "@/app/admin/admin-home";
 
@@ -28,6 +29,7 @@ export const router = createBrowserRouter([
           { path: "orders/new", element: <PlaceOrderPage /> },
           { path: "orders", element: <MyOrdersPage /> },
           { path: "orders/:id", element: <OrderDetailPage /> },
+          { path: "track/:orderId", element: <TrackPage /> },
         ],
       },
       { element: <RequireRole role="driver" />, children: [{ path: "driver", element: <DriverHome /> }] },

@@ -33,4 +33,22 @@ describe("CustomerHome", () => {
     render(<MemoryRouter><CustomerHome /></MemoryRouter>, { wrapper: QueryWrapper });
     expect(await screen.findByText(/place your first order/i)).toBeInTheDocument();
   });
+
+  it("shows a Track link on the active-delivery banner", async () => {
+    server.use(
+      http.get("/api/orders/me", ({ request }) => {
+        const status = new URL(request.url).searchParams.get("status");
+        if (status === "in_transit") {
+          return HttpResponse.json({
+            items: [{ id: "oActive", customerId: "u1", status: "in_transit", pickup: { street: "1 A", city: "M", country: "PH", lat: 14, lng: 121 }, dropoff: { street: "2 B", city: "M", country: "PH", lat: 14, lng: 121 }, items: [], assignedDriverId: "d1", scheduledFor: null, cancelReason: null, createdAt: "2026-06-17T00:00:00Z", updatedAt: "2026-06-17T00:00:00Z" }],
+            nextCursor: null,
+          });
+        }
+        return HttpResponse.json({ items: [], nextCursor: null });
+      }),
+    );
+    render(<MemoryRouter><CustomerHome /></MemoryRouter>, { wrapper: QueryWrapper });
+    const track = await screen.findByRole("link", { name: /track/i });
+    expect(track).toHaveAttribute("href", "/track/oActive");
+  });
 });
