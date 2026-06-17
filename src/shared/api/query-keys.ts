@@ -12,3 +12,9 @@ export const addressKeys = {
   all: ["addresses"] as const,
   list: () => [...addressKeys.all, "list"] as const,
 };
+
+export const trackingKeys = {
+  all: ["tracking"] as const,
+  latest: (id: string) => [...trackingKeys.all, "latest", id] as const,
+  route: (id: string) => [...trackingKeys.all, "route", id] as const,
+};
