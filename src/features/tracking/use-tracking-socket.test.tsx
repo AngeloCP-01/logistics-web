@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, type Mock } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, renderHook } from "@testing-library/react";
 import { useAuthStore } from "@/features/auth/auth-store";
 
@@ -12,7 +12,7 @@ const fakeSocket = {
   emit: vi.fn(),
   disconnect: vi.fn(),
 };
-const ioMock = vi.fn(() => fakeSocket);
+const ioMock = vi.fn((..._args: unknown[]) => fakeSocket);
 vi.mock("socket.io-client", () => ({ io: (...args: unknown[]) => ioMock(...args) }));
 
 import { useTrackingSocket } from "./use-tracking-socket";
@@ -62,7 +62,7 @@ describe("useTrackingSocket", () => {
 
   it("passes a fresh token through the auth callback", () => {
     renderHook(() => useTrackingSocket("o1"));
-    const opts = ioMock.mock.calls[0]?.[1] as { auth: (cb: (d: unknown) => void) => void };
+    const opts = ioMock.mock.calls[0]?.[1] as unknown as { auth: (cb: (d: unknown) => void) => void };
     let delivered: unknown;
     opts.auth((d) => (delivered = d));
     expect(delivered).toEqual({ token: "tok" });
