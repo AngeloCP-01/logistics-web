@@ -4,7 +4,6 @@ import { useAuthStore } from "@/features/auth/auth-store";
 import type {
   LifecycleSignal,
   LocationPoint,
-  TrackingErrorPayload,
   TrackingPhase,
 } from "./tracking-types";
 
@@ -47,10 +46,27 @@ export function useTrackingSocket(orderId: string): TrackingSocketState {
     });
     socket.on("disconnect", () => setConnected(false));
     socket.on("connect_error", (err: Error) => setError(err.message));
-    socket.on("driver:location", (p: LocationPoint) => setLatest(p));
-    socket.on("delivery:in_transit", (_p: LifecycleSignal) => setPhase("in_transit"));
-    socket.on("delivery:completed", (_p: LifecycleSignal) => setPhase("completed"));
-    socket.on("error", (p: TrackingErrorPayload) => setError(p.message));
+    socket.on("driver:location", (p: LocationPoint) => {
+      if (p.orderId === orderId) setLatest(p);
+    });
+    socket.on("delivery:in_transit", (p: LifecycleSignal) => {
+      if (p.orderId === orderId) setPhase("in_transit");
+    });
+    socket.on("delivery:completed", (p: LifecycleSignal) => {
+      if (p.orderId === orderId) setPhase("completed");
+    });
+    // "error" is a reserved Socket.IO event — the manager/parser can emit it with an
+    // Error object or a string, so we cannot trust p.message blindly; derive a safe string.
+    socket.on("error", (p: unknown) => {
+      const message =
+        typeof p === "object" &&
+        p !== null &&
+        "message" in p &&
+        typeof (p as { message: unknown }).message === "string"
+          ? (p as { message: string }).message
+          : "connection error";
+      setError(message);
+    });
 
     return () => {
       socket.disconnect();

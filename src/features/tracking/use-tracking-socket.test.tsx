@@ -73,4 +73,27 @@ describe("useTrackingSocket", () => {
     unmount();
     expect(fakeSocket.disconnect).toHaveBeenCalled();
   });
+
+  it("ignores a driver:location whose orderId does not match", () => {
+    const { result } = renderHook(() => useTrackingSocket("o1"));
+    fire("connect");
+    const wrongPoint = { orderId: "other-order", lat: 14.6, lng: 121.0, ts: "2026-06-17T00:00:00Z" };
+    fire("driver:location", wrongPoint);
+    expect(result.current.latest).toBeNull();
+  });
+
+  it("ignores a delivery:completed whose orderId does not match", () => {
+    const { result } = renderHook(() => useTrackingSocket("o1"));
+    fire("delivery:completed", { orderId: "other-order" });
+    expect(result.current.phase).toBeNull();
+  });
+
+  it("sets a fallback message when error fires with a non-conforming payload", () => {
+    const { result } = renderHook(() => useTrackingSocket("o1"));
+    fire("error", "unexpected string payload");
+    expect(result.current.error).toBe("connection error");
+
+    fire("error", {});
+    expect(result.current.error).toBe("connection error");
+  });
 });
