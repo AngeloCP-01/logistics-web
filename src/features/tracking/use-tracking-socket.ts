@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
 import { useAuthStore } from "@/features/auth/auth-store";
 import type {
@@ -14,6 +14,9 @@ export interface TrackingSocketState {
   phase: TrackingPhase | null;
   connected: boolean;
   error: string | null;
+  sendLocation: (lat: number, lng: number, accuracy?: number) => void;
+  sendPickup: () => void;
+  sendComplete: () => void;
 }
 
 export function useTrackingSocket(orderId: string): TrackingSocketState {
@@ -21,6 +24,7 @@ export function useTrackingSocket(orderId: string): TrackingSocketState {
   const [phase, setPhase] = useState<TrackingPhase | null>(null);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
     const wsUrl = import.meta.env.VITE_WS_URL;
@@ -38,6 +42,7 @@ export function useTrackingSocket(orderId: string): TrackingSocketState {
       auth: (cb: (data: { token: string }) => void) =>
         cb({ token: useAuthStore.getState().accessToken ?? "" }),
     });
+    socketRef.current = socket;
 
     socket.on("connect", () => {
       setConnected(true);
@@ -70,8 +75,25 @@ export function useTrackingSocket(orderId: string): TrackingSocketState {
 
     return () => {
       socket.disconnect();
+      socketRef.current = null;
     };
   }, [orderId]);
 
-  return { latest, phase, connected, error };
+  const sendLocation = useCallback(
+    (lat: number, lng: number, accuracy?: number) => {
+      socketRef.current?.emit(
+        "location:update",
+        accuracy === undefined ? { orderId, lat, lng } : { orderId, lat, lng, accuracy },
+      );
+    },
+    [orderId],
+  );
+  const sendPickup = useCallback(() => {
+    socketRef.current?.emit("delivery:pickup", { orderId });
+  }, [orderId]);
+  const sendComplete = useCallback(() => {
+    socketRef.current?.emit("delivery:complete", { orderId });
+  }, [orderId]);
+
+  return { latest, phase, connected, error, sendLocation, sendPickup, sendComplete };
 }

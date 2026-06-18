@@ -55,8 +55,14 @@ function renderAt(id: string) {
   );
 }
 
+const noopProducers = {
+  sendLocation: vi.fn(),
+  sendPickup: vi.fn(),
+  sendComplete: vi.fn(),
+};
+
 beforeEach(() => {
-  socketState.mockReturnValue({ latest: null, phase: null, connected: false, error: null });
+  socketState.mockReturnValue({ latest: null, phase: null, connected: false, error: null, ...noopProducers });
   useAuthStore.getState().setSession("tok", { id: "u1", email: "c@x.com", role: "customer" });
 });
 
@@ -70,7 +76,7 @@ describe("TrackPage", () => {
 
   it("renders the map and an ETA once a live point arrives", async () => {
     seedOk();
-    socketState.mockReturnValue({ latest: POINT, phase: "in_transit", connected: true, error: null });
+    socketState.mockReturnValue({ latest: POINT, phase: "in_transit", connected: true, error: null, ...noopProducers });
     renderAt("o1");
     expect(await screen.findByTestId("tracking-map")).toBeInTheDocument();
     expect(screen.getByText(/ETA ~\d+ min/)).toBeInTheDocument();
@@ -78,7 +84,7 @@ describe("TrackPage", () => {
 
   it("shows a delivered terminal state on completion", async () => {
     seedOk();
-    socketState.mockReturnValue({ latest: POINT, phase: "completed", connected: true, error: null });
+    socketState.mockReturnValue({ latest: POINT, phase: "completed", connected: true, error: null, ...noopProducers });
     renderAt("o1");
     expect(await screen.findByText(/delivered/i)).toBeInTheDocument();
   });

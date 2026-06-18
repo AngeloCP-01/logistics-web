@@ -96,4 +96,27 @@ describe("useTrackingSocket", () => {
     fire("error", {});
     expect(result.current.error).toBe("connection error");
   });
+
+  it("sendLocation emits location:update with the orderId", () => {
+    const { result } = renderHook(() => useTrackingSocket("o1"));
+    fire("connect");
+    result.current.sendLocation(14.5, 121.0, 12);
+    expect(fakeSocket.emit).toHaveBeenCalledWith("location:update", { orderId: "o1", lat: 14.5, lng: 121.0, accuracy: 12 });
+  });
+
+  it("sendLocation omits accuracy when not provided", () => {
+    const { result } = renderHook(() => useTrackingSocket("o1"));
+    fire("connect");
+    result.current.sendLocation(14.5, 121.0);
+    expect(fakeSocket.emit).toHaveBeenCalledWith("location:update", { orderId: "o1", lat: 14.5, lng: 121.0 });
+  });
+
+  it("sendPickup and sendComplete emit their lifecycle events", () => {
+    const { result } = renderHook(() => useTrackingSocket("o1"));
+    fire("connect");
+    result.current.sendPickup();
+    expect(fakeSocket.emit).toHaveBeenCalledWith("delivery:pickup", { orderId: "o1" });
+    result.current.sendComplete();
+    expect(fakeSocket.emit).toHaveBeenCalledWith("delivery:complete", { orderId: "o1" });
+  });
 });
