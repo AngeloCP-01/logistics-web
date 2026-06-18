@@ -3,7 +3,7 @@
 > Customer + driver + admin SPA for the AI Logistics platform. React 18 + Vite + TypeScript + Tailwind + shadcn/ui. Deployed to Vercel.
 
 **Phase:** 7 (Web Frontend)
-**Status:** 🟡 In progress — **`v0.2.0` shipped** (Plan 1 foundation + Plan 2 customer orders). Built in sequenced installments; the customer role is split into Orders core (done) → Profile + Notifications (next) → Live Tracking. Driver + Admin apps come after.
+**Status:** 🟡 In progress — **`v0.3.0` shipped** (Plan 1 foundation + Plan 2 customer orders + Plan B customer live tracking). Built in sequenced installments; next up is Plan C (Driver app, `v0.4.0`). Admin app + notification frontend come after.
 
 ## What this app does
 
@@ -16,6 +16,7 @@ One single-page app, three role-gated views (route-level guards on the JWT role 
 
 - **Plan 1 — Foundation (`v0.1.0`)**: Vite/TS/Tailwind/shadcn scaffold; the **auth BFF** (3 Vercel functions `api/auth/{login,refresh,logout}` — httpOnly refresh cookie, access token in memory); the typed `fetchClient` (auth injection + **single-flight 401 refresh**) + `ApiError` (RFC 7807); Zustand auth store; React Router v7 with `<RequireRole>`; login/register screens; CI (lint + typecheck + Vitest + build) + one Playwright role-gate smoke.
 - **Plan 2 — Customer Orders core (`v0.2.0`)**: the customer order-management slice — Home (active-delivery banner + recent orders + CTA), Place Order (inline pickup + saved-address dropoff with inline add-address + free-text items + advisory schedule), My Orders (cursor pagination + status filter), Order Detail (status timeline + items + addresses + conditional cancel). React Query hooks over the typed client; multi-service `gen:api` (auth + order + user types). Plus a Playwright customer happy-path E2E.
+- **Plan B — Customer Live Tracking (`v0.3.0`)**: the `/track/:orderId` screen (customer-gated) — REST seed (`route` + `latest`) + a Socket.IO client (`features/tracking/use-tracking-socket`) consuming `driver:location`/`delivery:in_transit`/`delivery:completed`, a dark MapLibre map (`react-map-gl/maplibre`) with an indigo breadcrumb + driver/dropoff markers, a lifecycle badge, and a naive haversine ETA. Entry points: the Home active banner Track button + an Order Detail Track button (shown for `assigned`/`in_transit`). The `features/tracking/` module is reused (producing) by the Driver app in Plan C.
 
 ## Locked decisions (from the Web spec — 2026-06-11)
 
@@ -25,7 +26,7 @@ One single-page app, three role-gated views (route-level guards on the JWT role 
 - **State:** React Query (server state) + Zustand (auth + UI).
 - **Forms:** react-hook-form + Zod. Pattern: **string-typed form values + an explicit `toXxxRequest` converter** to the numeric API shape (sidesteps `z.coerce`/RHF input-output generic friction; converters are unit-tested). Native `<select>` (not radix Select) for simple pickers/filters — reliably testable under jsdom.
 - **Maps:** MapLibre GL JS + OpenFreeMap (dark canvas on tracking/dispatch) — arrives with the Live Tracking plan.
-- **Realtime:** Socket.IO client; the driver app is the real location producer. **Tracking WS handshake passes the access token in the Socket.IO `auth` payload** (`io(url, { auth: { token } })`); client emits `room:join {orderId}`, server emits `driver:location {orderId,lat,lng,ts}`.
+- **Realtime:** Socket.IO client; the driver app is the real location producer. **Tracking WS handshake passes the access token in the Socket.IO `auth` payload** (`io(url, { auth: { token } })`); client emits `room:join {orderId}`, server emits `driver:location {orderId,lat,lng,ts}`. `VITE_WS_URL` is the WS **origin** (e.g. `https://tracking.example.com`); the client sets the engine path to `/v1/tracking/socket.io/` explicitly (`io(VITE_WS_URL, { path: "/v1/tracking/socket.io/", auth: { token } })`).
 - **Auth/session:** scoped BFF — 3 Vercel functions hold the refresh token in an httpOnly cookie; access token in Zustand memory; hard reload survives via silent refresh; single-flight refresh on 401.
 - **API types:** `openapi-typescript` generating a **checked-in snapshot** (`src/shared/api/types/`). `gen:api` reads the OpenAPI from the **local sibling checkout** (`../logistics-contracts/openapi/*.yaml`), not the npm package — the published `@angelocp-01/logistics-contracts@0.7.0` ships only `dist/` + `schemas/` (no `openapi/`) and is `access:restricted`, so it can't feed generation and isn't a dependency here. CI/build use the committed snapshot and need no registry access. **Future contracts-repo cleanup:** add `openapi/` to the package `files[]` (and reconsider public access) so consumers can `gen:api` from `node_modules` without a sibling checkout. (Also: order-service `weightKg` is `number|null` at runtime but optional-not-nullable in the OpenAPI/generated type — frontend tolerates both; fix on the next contracts bump.)
 - **Tests:** Vitest + RTL + MSW (unit/component) + Playwright (E2E smokes in CI; the cross-service full-loop is a local/manual showcase). No Storybook for V1.
@@ -48,6 +49,7 @@ src/
                                      #   order-status badge, order-schema, place-order/my-orders/order-detail pages, order-card, cancel dialog
     addresses/                       # types, use-addresses/use-create-address, address-picker, address-schema
     home/                            # customer-home
+    tracking/                        # tracking-types, eta, use-tracking-seed, use-tracking-socket, tracking-map, track-page
   shared/
     api/                            # client (api singleton), fetch-client, api-error, query-client, query-keys, types/ (generated)
     ui/                             # shadcn atoms (button,input,label,card,badge,skeleton,dialog,table,textarea,separator)
@@ -93,5 +95,5 @@ npm run lint && npm run typecheck && npm run build
 ## Pointers
 
 - Spec: [`../docs/superpowers/specs/2026-06-11-web-frontend-design.md`](../docs/superpowers/specs/2026-06-11-web-frontend-design.md)
-- Plans: [`../docs/superpowers/plans/2026-06-11-phase-7-web-foundation.md`](../docs/superpowers/plans/2026-06-11-phase-7-web-foundation.md) (Plan 1) · [`../docs/superpowers/plans/2026-06-11-phase-7-customer-orders.md`](../docs/superpowers/plans/2026-06-11-phase-7-customer-orders.md) (Plan 2)
+- Plans: [`../docs/superpowers/plans/2026-06-11-phase-7-web-foundation.md`](../docs/superpowers/plans/2026-06-11-phase-7-web-foundation.md) (Plan 1) · [`../docs/superpowers/plans/2026-06-11-phase-7-customer-orders.md`](../docs/superpowers/plans/2026-06-11-phase-7-customer-orders.md) (Plan 2) · [`../docs/superpowers/plans/2026-06-17-phase-7b-customer-live-tracking.md`](../docs/superpowers/plans/2026-06-17-phase-7b-customer-live-tracking.md) (Plan B)
 - Tracker: [`../docs/superpowers/tracker.md`](../docs/superpowers/tracker.md)
