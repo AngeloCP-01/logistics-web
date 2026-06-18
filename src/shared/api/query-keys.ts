@@ -18,3 +18,10 @@ export const trackingKeys = {
   latest: (id: string) => [...trackingKeys.all, "latest", id] as const,
   route: (id: string) => [...trackingKeys.all, "route", id] as const,
 };
+
+export const driverKeys = {
+  all: ["driver"] as const,
+  profile: () => [...driverKeys.all, "profile"] as const,
+  currentOffer: () => [...driverKeys.all, "currentOffer"] as const,
+  assignment: (id: string) => [...driverKeys.all, "assignment", id] as const,
+};
