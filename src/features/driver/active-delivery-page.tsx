@@ -30,6 +30,11 @@ export function ActiveDeliveryPage() {
     if (phase === "completed") clearActive();
   }, [phase, clearActive]);
 
+  // Clear the persisted active order when the assignment can no longer be loaded (deleted / reassigned).
+  useEffect(() => {
+    if (assignment.isError) clearActive();
+  }, [assignment.isError, clearActive]);
+
   if (assignment.isLoading) {
     return (
       <div className="mx-auto max-w-2xl space-y-3 p-8">
@@ -40,8 +45,11 @@ export function ActiveDeliveryPage() {
   }
   if (assignment.error || !assignment.data) {
     return (
-      <div className="mx-auto max-w-2xl p-8">
+      <div className="mx-auto max-w-2xl space-y-4 p-8">
         <p className="text-sm text-muted-foreground">Could not load this delivery.</p>
+        <Link to="/driver">
+          <Button>Back to Today</Button>
+        </Link>
       </div>
     );
   }

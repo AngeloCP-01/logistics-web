@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { http, HttpResponse } from "msw";
@@ -72,5 +72,13 @@ describe("ActiveDeliveryPage", () => {
     renderPage();
     expect(await screen.findByText(/delivery complete/i)).toBeInTheDocument();
     expect(useDriverActiveStore.getState().activeOrderId).toBeNull();
+  });
+
+  it("shows error message + back link and clears active order when assignment 404s", async () => {
+    server.use(http.get("/api/dispatch/assignments/o1", () => HttpResponse.json({ title: "Not found" }, { status: 404 })));
+    renderPage();
+    expect(await screen.findByText(/could not load this delivery/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /back to today/i })).toBeInTheDocument();
+    await waitFor(() => expect(useDriverActiveStore.getState().activeOrderId).toBeNull());
   });
 });
