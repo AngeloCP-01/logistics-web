@@ -11,7 +11,9 @@ import { PlaceOrderPage } from "@/features/orders/place-order-page";
 import { MyOrdersPage } from "@/features/orders/my-orders-page";
 import { OrderDetailPage } from "@/features/orders/order-detail-page";
 import { TrackPage } from "@/features/tracking/track-page";
-import { DriverHome } from "@/app/driver/driver-home";
+import { DriverTodayPage } from "@/features/driver/driver-today-page";
+import { OfferPage } from "@/features/driver/offer-page";
+import { ActiveDeliveryPage } from "@/features/driver/active-delivery-page";
 import { AdminHome } from "@/app/admin/admin-home";
 
 export const router = createBrowserRouter([
@@ -32,7 +34,14 @@ export const router = createBrowserRouter([
           { path: "track/:orderId", element: <TrackPage /> },
         ],
       },
-      { element: <RequireRole role="driver" />, children: [{ path: "driver", element: <DriverHome /> }] },
+      {
+        element: <RequireRole role="driver" />,
+        children: [
+          { path: "driver", element: <DriverTodayPage /> },
+          { path: "driver/offers", element: <OfferPage /> },
+          { path: "driver/active/:orderId", element: <ActiveDeliveryPage /> },
+        ],
+      },
       { element: <RequireRole role="admin" />, children: [{ path: "admin/orders", element: <AdminHome /> }] },
     ],
   },
