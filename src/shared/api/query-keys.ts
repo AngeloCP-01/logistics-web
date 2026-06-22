@@ -34,3 +34,10 @@ export const adminKeys = {
   availableDrivers: () => [...adminKeys.all, "availableDrivers"] as const,
   analytics: () => [...adminKeys.all, "analytics"] as const,
 };
+
+export const notificationKeys = {
+  all: ["notifications"] as const,
+  feed: () => [...notificationKeys.all, "feed"] as const,
+  unread: () => [...notificationKeys.all, "unread"] as const,
+  preferences: () => [...notificationKeys.all, "preferences"] as const,
+};
