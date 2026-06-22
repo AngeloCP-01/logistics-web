@@ -3,7 +3,7 @@
 > Customer + driver + admin SPA for the AI Logistics platform. React 18 + Vite + TypeScript + Tailwind + shadcn/ui. Deployed to Vercel.
 
 **Phase:** 7 (Web Frontend)
-**Status:** 🟢 **`v0.4.0` shipped** (Plan 1 foundation + Plan 2 customer orders + Plan B customer live tracking + Plan C driver app). The two-sided tracking loop (customer consumes, driver produces) is now exercisable end-to-end through the UI. Admin app + notification frontend come after.
+**Status:** 🟢 **`v0.5.0` shipped** (Plan 1 foundation + Plan 2 customer orders + Plan B customer live tracking + Plan C driver app + Plan D admin app). All three role apps are now built; the two-sided tracking loop is exercisable end-to-end. The deferred Customer Profile + Notifications frontend comes after.
 
 ## What this app does
 
@@ -18,6 +18,7 @@ One single-page app, three role-gated views (route-level guards on the JWT role 
 - **Plan 2 — Customer Orders core (`v0.2.0`)**: the customer order-management slice — Home (active-delivery banner + recent orders + CTA), Place Order (inline pickup + saved-address dropoff with inline add-address + free-text items + advisory schedule), My Orders (cursor pagination + status filter), Order Detail (status timeline + items + addresses + conditional cancel). React Query hooks over the typed client; multi-service `gen:api` (auth + order + user types). Plus a Playwright customer happy-path E2E.
 - **Plan B — Customer Live Tracking (`v0.3.0`)**: the `/track/:orderId` screen (customer-gated) — REST seed (`route` + `latest`) + a Socket.IO client (`features/tracking/use-tracking-socket`) consuming `driver:location`/`delivery:in_transit`/`delivery:completed`, a dark MapLibre map (`react-map-gl/maplibre`) with an indigo breadcrumb + driver/dropoff markers, a lifecycle badge, and a naive haversine ETA. Entry points: the Home active banner Track button + an Order Detail Track button (shown for `assigned`/`in_transit`). The `features/tracking/` module is reused (producing) by the Driver app in Plan C.
 - **Plan C — Driver app (`v0.4.0`)**: the `driver`-gated app — `/driver` Today (profile-complete gate via `PATCH /v1/users/me/driver`, availability toggle via `PUT /v1/users/me/availability`, ~3s polling of `GET /v1/dispatch/offers/current`), `/driver/offers` (order-summary card + TTL countdown + accept/reject `POST /v1/dispatch/assignments/:id/{accept,reject}`), and `/driver/active/:orderId` which **reuses `features/tracking/`'s socket client to *produce*** `delivery:pickup` / `location:update` (from `navigator.geolocation.watchPosition`) / `delivery:complete` on the same dark MapLibre map. Active-order id persisted locally (`driver-active-store`). The two-sided tracking loop (customer consumes, driver produces) is now exercisable end-to-end.
+- **Plan D — Admin app (`v0.5.0`)**: the `admin`-gated app in `features/admin/` — Orders Monitoring (`GET /v1/orders` table + status filter + load-more + detail), Manual Dispatch (`GET /v1/orders?status=created` → force-assign an online driver via `POST /v1/dispatch/assignments/:id/force-assign`), Driver Roster (online drivers via `GET /v1/dispatch/drivers/available`), Analytics (client-derived KPI cards + a **Recharts** deliveries-per-day chart over a bounded `GET /v1/orders` fetch; KPIs are pure unit-tested functions, the chart is mocked in the page test since Recharts needs real layout), and admin live tracking (reuses Plan B's `TrackPage` at `/admin/track/:orderId`). No backend changes — Driver Roster is honestly scoped to the online roster (no "list all drivers" endpoint exists).
 
 ## Locked decisions (from the Web spec — 2026-06-11)
 
@@ -42,7 +43,6 @@ src/
     App.tsx · main.tsx               # root + session bootstrap gate
     routes/                          # router.tsx, require-role.tsx, role-home.ts
     shell/app-shell.tsx              # role-aware nav + logout
-    driver/ · admin/                 # placeholder homes (filled by later plans)
     not-found.tsx · forbidden.tsx · error-element.tsx
   features/
     auth/                            # auth-store, session, login/register pages, schemas
@@ -53,6 +53,8 @@ src/
     tracking/                        # tracking-types, eta, use-tracking-seed, use-tracking-socket (consumes AND produces), tracking-map, track-page
     driver/                          # hooks (use-my-profile, use-update-driver-profile, use-set-availability, use-current-offer, use-assignment, use-accept-offer, use-reject-offer, use-geolocation-stream),
                                      #   store (driver-active-store), screens (today, offers, active-delivery), offer-countdown, availability-toggle, driver-profile-form
+    admin/                           # admin-types, hooks (use-admin-orders, use-dispatch-admin, use-all-orders), analytics (pure fns),
+                                     #   screens (admin-orders, admin-order-detail, manual-dispatch, driver-roster, admin-analytics), deliveries-chart
   shared/
     api/                            # client (api singleton), fetch-client, api-error, query-client, query-keys, types/ (generated)
     ui/                             # shadcn atoms (button,input,label,card,badge,skeleton,dialog,table,textarea,separator)
