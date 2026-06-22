@@ -14,7 +14,11 @@ import { TrackPage } from "@/features/tracking/track-page";
 import { DriverTodayPage } from "@/features/driver/driver-today-page";
 import { OfferPage } from "@/features/driver/offer-page";
 import { ActiveDeliveryPage } from "@/features/driver/active-delivery-page";
-import { AdminHome } from "@/app/admin/admin-home";
+import { AdminOrdersPage } from "@/features/admin/admin-orders-page";
+import { AdminOrderDetailPage } from "@/features/admin/admin-order-detail-page";
+import { ManualDispatchPage } from "@/features/admin/manual-dispatch-page";
+import { DriverRosterPage } from "@/features/admin/driver-roster-page";
+import { AdminAnalyticsPage } from "@/features/admin/admin-analytics-page";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage />, errorElement: <ErrorElement /> },
@@ -42,7 +46,17 @@ export const router = createBrowserRouter([
           { path: "driver/active/:orderId", element: <ActiveDeliveryPage /> },
         ],
       },
-      { element: <RequireRole role="admin" />, children: [{ path: "admin/orders", element: <AdminHome /> }] },
+      {
+        element: <RequireRole role="admin" />,
+        children: [
+          { path: "admin/orders", element: <AdminOrdersPage /> },
+          { path: "admin/orders/:id", element: <AdminOrderDetailPage /> },
+          { path: "admin/dispatch", element: <ManualDispatchPage /> },
+          { path: "admin/drivers", element: <DriverRosterPage /> },
+          { path: "admin/analytics", element: <AdminAnalyticsPage /> },
+          { path: "admin/track/:orderId", element: <TrackPage /> },
+        ],
+      },
     ],
   },
   { path: "*", element: <NotFound /> },
