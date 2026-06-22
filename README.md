@@ -124,9 +124,14 @@ sequenceDiagram
 
 ## Demo
 
-See [`docs/demo/WALKTHROUGH.md`](docs/demo/WALKTHROUGH.md) for the full walkthrough.
+The full delivery lifecycle, driven end-to-end through the UI against the local stack — a customer places an order, a driver goes online and accepts it, the customer watches the driver move on a live map, and the order completes:
 
-<!-- screenshots embedded by Task 9 -->
+| Place an order | Driver's incoming offer | Live tracking |
+|---|---|---|
+| ![Place order](docs/demo/screenshots/02-place-order.png) | ![Driver offer](docs/demo/screenshots/06-driver-offer.png) | ![Live tracking](docs/demo/screenshots/09-customer-tracking-live.png) |
+
+🎥 Recorded walkthroughs: [customer journey](docs/demo/lifecycle-customer.webm) · [driver journey](docs/demo/lifecycle-driver.webm)
+📖 Full narrated walkthrough with every screen: [`docs/demo/WALKTHROUGH.md`](docs/demo/WALKTHROUGH.md)
 
 ---
 
