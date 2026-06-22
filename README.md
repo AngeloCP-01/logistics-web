@@ -187,7 +187,7 @@ npm run dev                 # plain Vite dev server
 
 ## Deploy
 
-Deploy-ready; see [`../logistics-infrastructure/DEPLOY.md`](../logistics-infrastructure/DEPLOY.md) for the turnkey runbook (Render + Vercel).
+Deploy-ready; see [`../logistics-infrastructure/DEPLOY.md`](../logistics-infrastructure/DEPLOY.md) for the turnkey runbook (Render + Vercel) and [the target deployment topology](docs/diagrams/04-deployment-topology.md).
 
 ---
 

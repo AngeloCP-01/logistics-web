@@ -1,4 +1,4 @@
-import { test, expect, type Page, type BrowserContext } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import fs from "node:fs";
 
 // END-TO-END DEMO — drives the LIVE local stack (not hermetic). Records video
@@ -17,8 +17,17 @@ const SHOTS = "docs/demo/screenshots";
 fs.mkdirSync(SHOTS, { recursive: true });
 const shot = (p: Page, name: string) => p.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: true });
 
-const CUSTOMER = { email: "customer@logistics.local", password: "Customer12345!" };
-const DRIVER = { email: "driver@logistics.local", password: "Driver12345!" };
+// Throwaway local-stack seed accounts (see local-stack/RUNBOOK.md). Overridable
+// via env so no real credential is ever assumed; the fallbacks are the seeded
+// dev-only accounts that exist solely on a locally-running stack.
+const CUSTOMER = {
+  email: process.env.DEMO_CUSTOMER_EMAIL ?? "customer@logistics.local",
+  password: process.env.DEMO_CUSTOMER_PASSWORD ?? "Customer12345!",
+};
+const DRIVER = {
+  email: process.env.DEMO_DRIVER_EMAIL ?? "driver@logistics.local",
+  password: process.env.DEMO_DRIVER_PASSWORD ?? "Driver12345!",
+};
 
 const PICKUP = { lat: 14.5995, lng: 120.9842 };
 const DROPOFF = { lat: 14.676, lng: 121.0437 };
@@ -36,7 +45,7 @@ test("full delivery lifecycle: customer places, driver delivers, customer tracks
     recordVideo: { dir: "test-results/demo/video", size: { width: 1280, height: 720 } },
   });
   // Driver context gets geolocation so the real driver app can stream position.
-  const driverCtx: BrowserContext = await browser.newContext({
+  const driverCtx = await browser.newContext({
     permissions: ["geolocation"],
     geolocation: { latitude: PICKUP.lat, longitude: PICKUP.lng },
     recordVideo: { dir: "test-results/demo/video", size: { width: 1280, height: 720 } },
@@ -111,7 +120,9 @@ test("full delivery lifecycle: customer places, driver delivers, customer tracks
   await expect(drv.getByText(/delivery complete/i)).toBeVisible({ timeout: 15_000 });
   await shot(drv, "10-driver-complete");
 
-  await cust.waitForTimeout(3_000);
+  // The customer's tracking screen flips to "Delivered" over the WebSocket — wait
+  // for it explicitly rather than a bare timeout, then capture.
+  await expect(cust.getByText(/delivered/i)).toBeVisible({ timeout: 15_000 });
   await shot(cust, "11-customer-delivered");
 
   // Save the recorded videos to docs/demo (saveAs resolves after close).
