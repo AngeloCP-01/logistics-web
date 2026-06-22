@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useOrder } from "@/features/orders/use-order";
 import { OrderStatusBadge } from "@/features/orders/order-status";
+import type { OrderStatus } from "@/features/orders/types";
 import { ApiError } from "@/shared/api/api-error";
 import { Card } from "@/shared/ui/card";
 import { Skeleton } from "@/shared/ui/skeleton";
@@ -46,6 +47,12 @@ export function TrackPage() {
     live.phase ??
     (o.status === "in_transit" ? "in_transit" : o.status === "completed" ? "completed" : "pending");
 
+  // The badge follows the live phase too — the REST order status can lag behind
+  // (the order-service reflector consumes lifecycle events asynchronously), so a
+  // socket phase that's advanced past the seeded status wins.
+  const badgeStatus: OrderStatus =
+    phase === "completed" ? "completed" : phase === "in_transit" ? "in_transit" : o.status;
+
   const eta = phase === "in_transit" && latest ? etaMinutes(latest, dropoff) : null;
   const hasMapData = latest !== null || routePoints.length > 0;
 
@@ -56,7 +63,7 @@ export function TrackPage() {
           <h1 className="text-2xl font-semibold">Track delivery</h1>
           <p className="text-sm text-muted-foreground">To {o.dropoff.street}, {o.dropoff.city}</p>
         </div>
-        <OrderStatusBadge status={o.status} />
+        <OrderStatusBadge status={badgeStatus} />
       </div>
 
       {phase === "completed" ? (

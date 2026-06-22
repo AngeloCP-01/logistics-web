@@ -89,6 +89,32 @@ describe("TrackPage", () => {
     expect(await screen.findByText(/delivered/i)).toBeInTheDocument();
   });
 
+  it("reflects the live WS phase in the status badge, not a stale REST status", async () => {
+    // The order-service reflector can lag, so the REST status is still "created"
+    // while the driver is already in transit. The badge must follow the live phase.
+    server.use(
+      http.get("/api/orders/o1", () => HttpResponse.json(order("created"))),
+      http.get("/api/tracking/orders/o1/route", () => HttpResponse.json({ items: [], nextCursor: null })),
+      http.get("/api/tracking/orders/o1/latest", () => HttpResponse.json({ title: "x", status: 404 }, { status: 404 })),
+    );
+    socketState.mockReturnValue({ latest: POINT, phase: "in_transit", connected: true, error: null, ...noopProducers });
+    renderAt("o1");
+    expect(await screen.findByText("In transit")).toBeInTheDocument();
+    expect(screen.queryByText("Created")).not.toBeInTheDocument();
+  });
+
+  it("shows a completed badge from the live phase even if REST lags", async () => {
+    server.use(
+      http.get("/api/orders/o1", () => HttpResponse.json(order("created"))),
+      http.get("/api/tracking/orders/o1/route", () => HttpResponse.json({ items: [], nextCursor: null })),
+      http.get("/api/tracking/orders/o1/latest", () => HttpResponse.json({ title: "x", status: 404 }, { status: 404 })),
+    );
+    socketState.mockReturnValue({ latest: POINT, phase: "completed", connected: true, error: null, ...noopProducers });
+    renderAt("o1");
+    expect(await screen.findByText("Completed")).toBeInTheDocument();
+    expect(screen.queryByText("Created")).not.toBeInTheDocument();
+  });
+
   it("shows a not-found message when the order 404s", async () => {
     server.use(
       http.get("/api/orders/missing", () => HttpResponse.json({ title: "Order not found", status: 404 }, { status: 404 })),
