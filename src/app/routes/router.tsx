@@ -19,6 +19,8 @@ import { AdminOrderDetailPage } from "@/features/admin/admin-order-detail-page";
 import { ManualDispatchPage } from "@/features/admin/manual-dispatch-page";
 import { DriverRosterPage } from "@/features/admin/driver-roster-page";
 import { AdminAnalyticsPage } from "@/features/admin/admin-analytics-page";
+import { ProfilePage } from "@/features/profile/profile-page";
+import { NotificationsPage } from "@/features/notifications/notifications-page";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage />, errorElement: <ErrorElement /> },
@@ -36,6 +38,8 @@ export const router = createBrowserRouter([
           { path: "orders", element: <MyOrdersPage /> },
           { path: "orders/:id", element: <OrderDetailPage /> },
           { path: "track/:orderId", element: <TrackPage /> },
+          { path: "profile", element: <ProfilePage /> },
+          { path: "notifications", element: <NotificationsPage /> },
         ],
       },
       {

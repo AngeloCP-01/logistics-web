@@ -1,12 +1,14 @@
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { logoutRequest } from "@/features/auth/session";
+import { NotificationBell } from "@/features/notifications/notification-bell";
 import { Button } from "@/shared/ui/button";
 
 const NAV: Record<string, { to: string; label: string }[]> = {
   customer: [
     { to: "/", label: "Home" },
     { to: "/orders", label: "Orders" },
+    { to: "/profile", label: "Profile" },
   ],
   driver: [{ to: "/driver", label: "Today" }, { to: "/driver/offers", label: "Offers" }],
   admin: [
@@ -39,6 +41,7 @@ export function AppShell() {
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-3 text-sm">
+          {user?.role === "customer" && <NotificationBell />}
           <span className="text-muted-foreground">{user?.email}</span>
           <Button variant="outline" size="sm" onClick={onLogout}>Log out</Button>
         </div>
