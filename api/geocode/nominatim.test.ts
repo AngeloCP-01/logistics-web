@@ -29,7 +29,8 @@ describe("reverseGeocode", () => {
     ) as unknown as typeof fetch;
     const result = await reverseGeocode({ lat: 14.5574, lng: 121.0089 }, fetchImpl);
     expect(result).toEqual({ lat: 14.5574, lng: 121.0089, street: "Dela Rosa", city: "Makati", country: "PH" });
-    const calledUrl = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    const calls = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock.calls;
+    const calledUrl = String(calls[0]?.[0] ?? "");
     expect(calledUrl).toContain("lat=14.5574");
     expect(calledUrl).toContain("lon=121.0089");
   });
