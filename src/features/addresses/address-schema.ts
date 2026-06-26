@@ -1,9 +1,15 @@
 import { z } from "zod";
 import type { CreateAddressRequest } from "./types";
 
+// Coordinates are commonly pasted from map apps with a trailing degree sign
+// (e.g. "14.5574°"); tolerate it rather than rejecting a valid coordinate.
+export function parseCoord(s: string): number {
+  return Number(s.replace("°", "").trim());
+}
+
 function coordString(min: number, max: number) {
   return z.string().min(1, "Required").refine((s) => {
-    const n = Number(s);
+    const n = parseCoord(s);
     return Number.isFinite(n) && n >= min && n <= max;
   }, `Must be ${min}…${max}`);
 }
@@ -25,7 +31,7 @@ export function toCreateAddressRequest(v: AddressFormValues): CreateAddressReque
     street: v.street,
     city: v.city,
     country: v.country.toUpperCase(),
-    lat: Number(v.lat),
-    lng: Number(v.lng),
+    lat: parseCoord(v.lat),
+    lng: parseCoord(v.lng),
   };
 }

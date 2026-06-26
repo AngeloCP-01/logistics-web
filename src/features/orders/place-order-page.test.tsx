@@ -1,12 +1,21 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { http, HttpResponse } from "msw";
+import type { ReactNode } from "react";
 import { server } from "@/test/msw-server";
 import { QueryWrapper } from "@/test/query-wrapper";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { PlaceOrderPage } from "./place-order-page";
+
+vi.mock("react-map-gl/maplibre", () => ({
+  default: ({ children, onClick }: { children?: ReactNode; onClick?: (e: { lngLat: { lat: number; lng: number } }) => void }) => (
+    <div data-testid="map" onClick={() => onClick?.({ lngLat: { lat: 14.6, lng: 121 } })}>{children}</div>
+  ),
+  Marker: () => <div data-testid="pin" />,
+}));
+vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
 
 const ADDR = { id: "a1", userId: "u1", label: "Home", street: "12 Mabini", city: "Manila", country: "PH", lat: 14.6, lng: 121 };
 
@@ -29,6 +38,7 @@ describe("PlaceOrderPage", () => {
     let posted: unknown;
     server.use(
       http.get("/api/users/me/addresses", () => HttpResponse.json({ items: [ADDR], nextCursor: null })),
+      http.get("/api/geocode/reverse", () => HttpResponse.json({ lat: 14.6, lng: 121, street: "1 A St", city: "Manila", country: "PH" })),
       http.post("/api/orders", async ({ request }) => {
         posted = await request.json();
         return HttpResponse.json({ id: "oNew", customerId: "u1", status: "created", pickup: {}, dropoff: {}, items: [], assignedDriverId: null, scheduledFor: null, cancelReason: null, createdAt: "x", updatedAt: "x" }, { status: 201 });
@@ -37,11 +47,8 @@ describe("PlaceOrderPage", () => {
     renderPage();
 
     await screen.findByRole("option", { name: /Home/ });
-    await userEvent.type(screen.getByLabelText(/pickup street/i), "1 A St");
-    await userEvent.type(screen.getByLabelText(/pickup city/i), "Manila");
-    await userEvent.type(screen.getByLabelText(/pickup country/i), "PH");
-    await userEvent.type(screen.getByLabelText(/pickup latitude/i), "14.6");
-    await userEvent.type(screen.getByLabelText(/pickup longitude/i), "121");
+    await userEvent.click(screen.getByTestId("map"));
+    await screen.findByTestId("pin");
     await userEvent.selectOptions(screen.getByLabelText(/dropoff address/i), "a1");
     await userEvent.type(screen.getByLabelText(/item 1 description/i), "Box of books");
     await userEvent.click(screen.getByRole("button", { name: /place order/i }));

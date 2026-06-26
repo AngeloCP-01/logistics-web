@@ -6,6 +6,15 @@ import { server } from "@/test/msw-server";
 import { QueryWrapper } from "@/test/query-wrapper";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { AddressPicker } from "./address-picker";
+import type { ReactNode } from "react";
+
+vi.mock("react-map-gl/maplibre", () => ({
+  default: ({ children, onClick }: { children?: ReactNode; onClick?: (e: { lngLat: { lat: number; lng: number } }) => void }) => (
+    <div data-testid="map" onClick={() => onClick?.({ lngLat: { lat: 14.55, lng: 121.02 } })}>{children}</div>
+  ),
+  Marker: () => <div data-testid="pin" />,
+}));
+vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
 
 const ADDR = { id: "a1", userId: "u1", label: "Home", street: "12 Mabini", city: "Manila", country: "PH", lat: 14.6, lng: 121 };
 
@@ -25,6 +34,7 @@ describe("AddressPicker", () => {
   it("adds a new address inline and selects it", async () => {
     server.use(
       http.get("/api/users/me/addresses", () => HttpResponse.json({ items: [], nextCursor: null })),
+      http.get("/api/geocode/reverse", () => HttpResponse.json({ lat: 14.55, lng: 121.02, street: "9 Office Rd", city: "Makati", country: "PH" })),
       http.post("/api/users/me/addresses", () => HttpResponse.json({ ...ADDR, id: "a2", label: "Office" }, { status: 201 })),
     );
     const onChange = vi.fn();
@@ -32,11 +42,8 @@ describe("AddressPicker", () => {
 
     await userEvent.click(screen.getByRole("button", { name: /add address/i }));
     await userEvent.type(screen.getByLabelText(/^label/i), "Office");
-    await userEvent.type(screen.getByLabelText(/^street/i), "9 Office Rd");
-    await userEvent.type(screen.getByLabelText(/^city/i), "Makati");
-    await userEvent.type(screen.getByLabelText(/^country/i), "PH");
-    await userEvent.type(screen.getByLabelText(/^latitude/i), "14.55");
-    await userEvent.type(screen.getByLabelText(/^longitude/i), "121.02");
+    await userEvent.click(screen.getByTestId("map"));
+    await screen.findByTestId("pin");
     await userEvent.click(screen.getByRole("button", { name: /save address/i }));
 
     await waitFor(() => expect(onChange).toHaveBeenCalledWith("a2"));

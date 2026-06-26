@@ -3,15 +3,17 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import loginHandler from "./api/auth/login";
 import refreshHandler from "./api/auth/refresh";
 import logoutHandler from "./api/auth/logout";
+import reverseHandler from "./api/geocode/reverse";
 
-// The three Vercel auth functions, keyed by their request path. Everything else
+// The Vercel BFF functions, keyed by their request path. Everything else
 // under /api/* is proxied to the gateway (mirrors vercel.json: function
 // precedence first, then the /api -> /v1 rewrite).
 type VercelLikeHandler = (req: IncomingMessage & { body?: unknown }, res: ServerResponse) => Promise<void>;
-const AUTH_FUNCTIONS: Record<string, VercelLikeHandler> = {
+const FUNCTIONS: Record<string, VercelLikeHandler> = {
   "/api/auth/login": loginHandler as unknown as VercelLikeHandler,
   "/api/auth/refresh": refreshHandler as unknown as VercelLikeHandler,
   "/api/auth/logout": logoutHandler as unknown as VercelLikeHandler,
+  "/api/geocode/reverse": reverseHandler as unknown as VercelLikeHandler,
 };
 
 const HOP_BY_HOP = ["content-encoding", "content-length", "transfer-encoding", "connection"];
@@ -72,7 +74,7 @@ export function devBff(gatewayUrl: string): Plugin {
         const path = url.split("?")[0] ?? url;
 
         void (async () => {
-          const fn = AUTH_FUNCTIONS[path];
+          const fn = FUNCTIONS[path];
           if (fn) {
             try {
               const raw = await readBody(req);
