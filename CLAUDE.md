@@ -3,7 +3,9 @@
 > Customer + driver + admin SPA for the AI Logistics platform. React 18 + Vite + TypeScript + Tailwind + shadcn/ui. Deployed to Vercel.
 
 **Phase:** 7 (Web Frontend)
-**Status:** 🟢 **`v0.6.0` shipped** (Plan 1 foundation + Plan 2 customer orders + Plan B customer live tracking + Plan C driver app + Plan D admin app + Plan E customer profile + notifications). The customer app is feature-complete and all three role apps are built. Phase 8 (polish) is next.
+**Status:** 🟢 **`v0.7.0` shipped** (v0.1.0–v0.6.0: foundation + customer orders + live tracking + driver app + admin app + profile/notifications; **v0.7.0: map-based location picker**). The customer app is feature-complete and all three role apps are built. Phase 8 (polish) is next.
+
+> **v0.7.0 — Map location picker (2026-06-26):** the free-text Latitude/Longitude inputs in the two saved-address forms AND Place Order's pickup are replaced by a shared `LocationPicker` (`src/shared/location/`) — a MapLibre map (click or "Use my location") that drops a pin and reverse-geocodes via a new same-origin BFF `GET /api/geocode/reverse` (`api/geocode/`, OpenStreetMap **Nominatim** core + thin Vercel-function and dev-`vite`-plugin adapters; 5s timeout) to autofill Street/City/Country. Coordinates come from the pin (lat/lng are hidden, schema-validated fields); degree-suffixed coords (`14.5574°`) are tolerated via `parseCoord`. Tracked Phase-8 hardening fast-follow: `Cache-Control` + Nominatim quota throttle on the geocode endpoint, `Allow: GET`/400-on-missing-params polish, re-pick autofill semantics.
 
 ## What this app does
 
