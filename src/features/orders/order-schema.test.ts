@@ -43,3 +43,19 @@ describe("toCreateOrderRequest", () => {
     expect(req.scheduledFor!.endsWith("Z")).toBe(true);
   });
 });
+
+const PICKUP = { label: "", street: "1 A St", city: "Manila", country: "ph", lat: "14.5574", lng: "121.0089" };
+const BASE = { pickup: PICKUP, dropoffAddressId: "a1", items: [{ description: "x", quantity: "1", weightKg: "" }], scheduledFor: "" };
+
+describe("placeOrderSchema pickup coordinates", () => {
+  it("accepts a trailing degree sign on pickup coordinates", () => {
+    const r = placeOrderSchema.safeParse({ ...BASE, pickup: { ...PICKUP, lat: "14.5574°", lng: "121.0089°" } });
+    expect(r.success).toBe(true);
+  });
+
+  it("strips the degree sign when converting to the API request", () => {
+    const req = toCreateOrderRequest({ ...BASE, pickup: { ...PICKUP, lat: "14.5574°", lng: "121.0089°" } });
+    expect(req.pickup.lat).toBe(14.5574);
+    expect(req.pickup.lng).toBe(121.0089);
+  });
+});

@@ -1,9 +1,15 @@
 import { z } from "zod";
 import type { CreateOrderRequest } from "./types";
 
+// Coordinates can arrive with a trailing degree sign (e.g. "14.5574°", as set by
+// the map picker or pasted from a map app); tolerate it rather than rejecting.
+function parseCoord(s: string): number {
+  return Number(s.replace("°", "").trim());
+}
+
 function coordString(min: number, max: number) {
   return z.string().min(1, "Required").refine((s) => {
-    const n = Number(s);
+    const n = parseCoord(s);
     return Number.isFinite(n) && n >= min && n <= max;
   }, `Must be ${min}…${max}`);
 }
@@ -44,8 +50,8 @@ export function toCreateOrderRequest(v: PlaceOrderValues): CreateOrderRequest {
       street: v.pickup.street,
       city: v.pickup.city,
       country: v.pickup.country.toUpperCase(),
-      lat: Number(v.pickup.lat),
-      lng: Number(v.pickup.lng),
+      lat: parseCoord(v.pickup.lat),
+      lng: parseCoord(v.pickup.lng),
     },
     dropoffAddressId: v.dropoffAddressId,
     items: v.items.map((i) => ({

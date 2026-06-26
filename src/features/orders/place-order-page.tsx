@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 import { placeOrderSchema, toCreateOrderRequest, type PlaceOrderValues } from "./order-schema";
 import { usePlaceOrder } from "./use-place-order";
 import { AddressPicker } from "@/features/addresses/address-picker";
+import { LocationPicker } from "@/shared/location/location-picker";
+import type { GeocodedLocation } from "@/shared/location/use-reverse-geocode";
 import { ApiError } from "@/shared/api/api-error";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -31,6 +33,16 @@ export function PlaceOrderPage() {
   } = useForm<PlaceOrderValues>({ resolver: zodResolver(placeOrderSchema), defaultValues: DEFAULTS });
   const { fields, append, remove } = useFieldArray({ control, name: "items" });
   const dropoffAddressId = watch("dropoffAddressId");
+  const pickupLat = watch("pickup.lat");
+  const pickupLng = watch("pickup.lng");
+  const pickupPin = pickupLat && pickupLng ? { lat: Number(pickupLat), lng: Number(pickupLng) } : null;
+  function applyPickupLocation(loc: GeocodedLocation) {
+    setValue("pickup.lat", String(loc.lat), { shouldValidate: true });
+    setValue("pickup.lng", String(loc.lng), { shouldValidate: true });
+    if (loc.street) setValue("pickup.street", loc.street, { shouldValidate: true });
+    if (loc.city) setValue("pickup.city", loc.city, { shouldValidate: true });
+    if (loc.country) setValue("pickup.country", loc.country, { shouldValidate: true });
+  }
 
   async function onSubmit(values: PlaceOrderValues) {
     setFormError(null);
@@ -52,14 +64,18 @@ export function PlaceOrderPage() {
             { name: "pickup.street", label: "Pickup street" },
             { name: "pickup.city", label: "Pickup city" },
             { name: "pickup.country", label: "Pickup country (2-letter)" },
-            { name: "pickup.lat", label: "Pickup latitude" },
-            { name: "pickup.lng", label: "Pickup longitude" },
           ] as const).map((f) => (
             <div key={f.name} className="space-y-1">
               <Label htmlFor={f.name}>{f.label}</Label>
               <Input id={f.name} {...register(f.name)} />
             </div>
           ))}
+          <input type="hidden" {...register("pickup.lat")} />
+          <input type="hidden" {...register("pickup.lng")} />
+          <div className="space-y-1">
+            <Label>Pickup location</Label>
+            <LocationPicker value={pickupPin} onChange={applyPickupLocation} />
+          </div>
           {(errors.pickup?.street || errors.pickup?.city || errors.pickup?.country || errors.pickup?.lat || errors.pickup?.lng) && (
             <p className="text-sm text-destructive">
               {errors.pickup?.street?.message ?? errors.pickup?.city?.message ?? errors.pickup?.country?.message ?? errors.pickup?.lat?.message ?? errors.pickup?.lng?.message}
