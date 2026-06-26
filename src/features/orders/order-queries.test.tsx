@@ -5,7 +5,7 @@ import { server } from "@/test/msw-server";
 import { QueryWrapper } from "@/test/query-wrapper";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { useMyOrders } from "./use-my-orders";
-import { useOrder } from "./use-order";
+import { useOrder, orderPollInterval } from "./use-order";
 import { useActiveOrder } from "./use-active-order";
 
 function order(id: string, status: string) {
@@ -13,6 +13,20 @@ function order(id: string, status: string) {
 }
 
 beforeEach(() => useAuthStore.getState().setSession("t", { id: "u1", email: "c@x.com", role: "customer" }));
+
+describe("orderPollInterval", () => {
+  it("polls every 5s while the order is non-terminal (so a driver pickup updates the page live)", () => {
+    expect(orderPollInterval(undefined)).toBe(5000);
+    expect(orderPollInterval("created")).toBe(5000);
+    expect(orderPollInterval("assigned")).toBe(5000);
+    expect(orderPollInterval("in_transit")).toBe(5000);
+  });
+
+  it("stops polling once the order is terminal", () => {
+    expect(orderPollInterval("completed")).toBe(false);
+    expect(orderPollInterval("cancelled")).toBe(false);
+  });
+});
 
 describe("useMyOrders", () => {
   it("passes the status filter and returns the first page", async () => {
