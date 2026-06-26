@@ -39,4 +39,11 @@ describe("reverseGeocode", () => {
     const fetchImpl = vi.fn(async () => new Response("nope", { status: 500 })) as unknown as typeof fetch;
     await expect(reverseGeocode({ lat: 14.5, lng: 121 }, fetchImpl)).rejects.toThrow();
   });
+
+  it("propagates an aborted/timed-out fetch as a throw", async () => {
+    const fetchImpl = vi.fn(async () => {
+      throw new DOMException("The operation was aborted.", "AbortError");
+    }) as unknown as typeof fetch;
+    await expect(reverseGeocode({ lat: 14.5, lng: 121 }, fetchImpl)).rejects.toThrow();
+  });
 });

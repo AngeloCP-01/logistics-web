@@ -46,7 +46,10 @@ export async function reverseGeocode(
   if (!Number.isFinite(lng) || lng < -180 || lng > 180) throw new BadCoordinatesError("lng must be -180…180");
 
   const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=jsonv2&addressdetails=1&zoom=18`;
-  const res = await fetchImpl(url, { headers: { "User-Agent": USER_AGENT, Accept: "application/json" } });
+  const res = await fetchImpl(url, {
+    headers: { "User-Agent": USER_AGENT, Accept: "application/json" },
+    signal: AbortSignal.timeout(5000),
+  });
   if (!res.ok) throw new Error(`nominatim responded ${res.status}`);
   const body = (await res.json()) as { address?: NominatimAddress };
   return { lat, lng, ...nominatimToAddress(body.address) };
