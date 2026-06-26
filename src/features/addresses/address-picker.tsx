@@ -10,6 +10,8 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/shared/ui/dialog";
+import { LocationPicker } from "@/shared/location/location-picker";
+import type { GeocodedLocation } from "@/shared/location/use-reverse-geocode";
 
 export function AddressPicker({ value, onChange, error }: { value: string; onChange: (id: string) => void; error?: string }) {
   const { data: addresses, isLoading } = useAddresses();
@@ -66,6 +68,8 @@ function AddAddressForm({ onCreated }: { onCreated: (id: string) => void }) {
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<AddressFormValues>({ resolver: zodResolver(addressSchema) });
 
@@ -84,9 +88,18 @@ function AddAddressForm({ onCreated }: { onCreated: (id: string) => void }) {
     { name: "street", label: "Street" },
     { name: "city", label: "City" },
     { name: "country", label: "Country (2-letter)" },
-    { name: "lat", label: "Latitude" },
-    { name: "lng", label: "Longitude" },
   ];
+
+  const lat = watch("lat");
+  const lng = watch("lng");
+  const pinValue = lat && lng ? { lat: Number(lat), lng: Number(lng) } : null;
+  function applyLocation(loc: GeocodedLocation) {
+    setValue("lat", String(loc.lat), { shouldValidate: true });
+    setValue("lng", String(loc.lng), { shouldValidate: true });
+    if (loc.street) setValue("street", loc.street, { shouldValidate: true });
+    if (loc.city) setValue("city", loc.city, { shouldValidate: true });
+    if (loc.country) setValue("country", loc.country, { shouldValidate: true });
+  }
 
   return (
     <form className="space-y-3" onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -97,6 +110,13 @@ function AddAddressForm({ onCreated }: { onCreated: (id: string) => void }) {
           {errors[f.name] && <p className="text-sm text-destructive">{errors[f.name]?.message}</p>}
         </div>
       ))}
+      <input type="hidden" {...register("lat")} />
+      <input type="hidden" {...register("lng")} />
+      <div className="space-y-1">
+        <Label>Location</Label>
+        <LocationPicker value={pinValue} onChange={applyLocation} />
+        {(errors.lat || errors.lng) && <p className="text-sm text-destructive">Pick a location on the map</p>}
+      </div>
       {formError && <p className="text-sm text-destructive">{formError}</p>}
       <Button type="submit" disabled={isSubmitting}>
         Save address

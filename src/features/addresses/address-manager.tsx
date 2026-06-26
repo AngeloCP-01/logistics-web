@@ -16,14 +16,14 @@ import { Label } from "@/shared/ui/label";
 import { Badge } from "@/shared/ui/badge";
 import { Card } from "@/shared/ui/card";
 import { Skeleton } from "@/shared/ui/skeleton";
+import { LocationPicker } from "@/shared/location/location-picker";
+import type { GeocodedLocation } from "@/shared/location/use-reverse-geocode";
 
 const FIELDS: { name: keyof AddressFormValues; label: string }[] = [
   { name: "label", label: "Label" },
   { name: "street", label: "Street" },
   { name: "city", label: "City" },
   { name: "country", label: "Country (2-letter)" },
-  { name: "lat", label: "Latitude" },
-  { name: "lng", label: "Longitude" },
 ];
 
 function AddressForm({ initial, onSubmit, submitting, submitLabel, onCancel }: {
@@ -33,12 +33,24 @@ function AddressForm({ initial, onSubmit, submitting, submitLabel, onCancel }: {
   submitLabel: string;
   onCancel?: () => void;
 }) {
-  const { register, handleSubmit, formState: { errors } } = useForm<AddressFormValues>({
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<AddressFormValues>({
     resolver: zodResolver(addressSchema),
     ...(initial
       ? { defaultValues: { label: initial.label, street: initial.street, city: initial.city, country: initial.country, lat: String(initial.lat), lng: String(initial.lng) } }
       : {}),
   });
+  const lat = watch("lat");
+  const lng = watch("lng");
+  const pinValue = lat && lng ? { lat: Number(lat), lng: Number(lng) } : null;
+
+  function applyLocation(loc: GeocodedLocation) {
+    setValue("lat", String(loc.lat), { shouldValidate: true });
+    setValue("lng", String(loc.lng), { shouldValidate: true });
+    if (loc.street) setValue("street", loc.street, { shouldValidate: true });
+    if (loc.city) setValue("city", loc.city, { shouldValidate: true });
+    if (loc.country) setValue("country", loc.country, { shouldValidate: true });
+  }
+
   return (
     <form className="grid grid-cols-2 gap-3" onSubmit={handleSubmit(onSubmit)}>
       {FIELDS.map((f) => (
@@ -48,6 +60,13 @@ function AddressForm({ initial, onSubmit, submitting, submitLabel, onCancel }: {
           {errors[f.name] && <p className="text-xs text-rose-700">{errors[f.name]?.message}</p>}
         </div>
       ))}
+      <input type="hidden" {...register("lat")} />
+      <input type="hidden" {...register("lng")} />
+      <div className="col-span-2 space-y-1">
+        <Label>Location</Label>
+        <LocationPicker value={pinValue} onChange={applyLocation} />
+        {(errors.lat || errors.lng) && <p className="text-xs text-rose-700">Pick a location on the map</p>}
+      </div>
       <div className="col-span-2 flex gap-2">
         <Button type="submit" size="sm" disabled={submitting}>{submitLabel}</Button>
         {onCancel && <Button type="button" variant="ghost" size="sm" onClick={onCancel}>Cancel</Button>}
