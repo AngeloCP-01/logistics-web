@@ -9,6 +9,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const gatewayUrl = env.GATEWAY_URL ?? "http://localhost:8080";
   process.env.GATEWAY_URL = gatewayUrl;
+  if (env.GEOCODE_CONTACT) process.env.GEOCODE_CONTACT = env.GEOCODE_CONTACT;
 
   return {
     plugins: [react(), devBff(gatewayUrl)],
