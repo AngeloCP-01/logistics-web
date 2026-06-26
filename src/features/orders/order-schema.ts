@@ -3,7 +3,7 @@ import type { CreateOrderRequest } from "./types";
 
 // Coordinates can arrive with a trailing degree sign (e.g. "14.5574°", as set by
 // the map picker or pasted from a map app); tolerate it rather than rejecting.
-function parseCoord(s: string): number {
+export function parseCoord(s: string): number {
   return Number(s.replace("°", "").trim());
 }
 

@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAddresses } from "./use-addresses";
 import { useCreateAddress } from "./use-create-address";
-import { addressSchema, toCreateAddressRequest, type AddressFormValues } from "./address-schema";
+import { parseCoord, addressSchema, toCreateAddressRequest, type AddressFormValues } from "./address-schema";
 import { formatAddressLabel } from "@/shared/lib/format";
 import { ApiError } from "@/shared/api/api-error";
 import { Button } from "@/shared/ui/button";
@@ -92,7 +92,7 @@ function AddAddressForm({ onCreated }: { onCreated: (id: string) => void }) {
 
   const lat = watch("lat");
   const lng = watch("lng");
-  const pinValue = lat && lng ? { lat: Number(lat), lng: Number(lng) } : null;
+  const pinValue = lat && lng ? { lat: parseCoord(lat), lng: parseCoord(lng) } : null;
   function applyLocation(loc: GeocodedLocation) {
     setValue("lat", String(loc.lat), { shouldValidate: true });
     setValue("lng", String(loc.lng), { shouldValidate: true });

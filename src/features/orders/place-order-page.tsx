@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
-import { placeOrderSchema, toCreateOrderRequest, type PlaceOrderValues } from "./order-schema";
+import { parseCoord, placeOrderSchema, toCreateOrderRequest, type PlaceOrderValues } from "./order-schema";
 import { usePlaceOrder } from "./use-place-order";
 import { AddressPicker } from "@/features/addresses/address-picker";
 import { LocationPicker } from "@/shared/location/location-picker";
@@ -35,7 +35,7 @@ export function PlaceOrderPage() {
   const dropoffAddressId = watch("dropoffAddressId");
   const pickupLat = watch("pickup.lat");
   const pickupLng = watch("pickup.lng");
-  const pickupPin = pickupLat && pickupLng ? { lat: Number(pickupLat), lng: Number(pickupLng) } : null;
+  const pickupPin = pickupLat && pickupLng ? { lat: parseCoord(pickupLat), lng: parseCoord(pickupLng) } : null;
   function applyPickupLocation(loc: GeocodedLocation) {
     setValue("pickup.lat", String(loc.lat), { shouldValidate: true });
     setValue("pickup.lng", String(loc.lng), { shouldValidate: true });

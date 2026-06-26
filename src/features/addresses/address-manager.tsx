@@ -5,7 +5,7 @@ import { Star, Pencil, Trash2 } from "lucide-react";
 import { useAddresses } from "./use-addresses";
 import { useCreateAddress } from "./use-create-address";
 import { useUpdateAddress, useDeleteAddress, useSetDefaultAddress } from "./use-address-mutations";
-import { addressSchema, toCreateAddressRequest, type AddressFormValues } from "./address-schema";
+import { parseCoord, addressSchema, toCreateAddressRequest, type AddressFormValues } from "./address-schema";
 import type { Address } from "./types";
 import { formatAddressLabel } from "@/shared/lib/format";
 import { ApiError } from "@/shared/api/api-error";
@@ -41,7 +41,7 @@ function AddressForm({ initial, onSubmit, submitting, submitLabel, onCancel }: {
   });
   const lat = watch("lat");
   const lng = watch("lng");
-  const pinValue = lat && lng ? { lat: Number(lat), lng: Number(lng) } : null;
+  const pinValue = lat && lng ? { lat: parseCoord(lat), lng: parseCoord(lng) } : null;
 
   function applyLocation(loc: GeocodedLocation) {
     setValue("lat", String(loc.lat), { shouldValidate: true });

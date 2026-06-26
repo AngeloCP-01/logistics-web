@@ -3,7 +3,7 @@ import type { CreateAddressRequest } from "./types";
 
 // Coordinates are commonly pasted from map apps with a trailing degree sign
 // (e.g. "14.5574°"); tolerate it rather than rejecting a valid coordinate.
-function parseCoord(s: string): number {
+export function parseCoord(s: string): number {
   return Number(s.replace("°", "").trim());
 }
 
